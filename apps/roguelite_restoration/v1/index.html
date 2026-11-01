@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12271e">
+  <meta name="description" content="A privacy-first, bite-sized ecological restoration roguelite. Seed a habitat and bring it back to life.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" href="./assets/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+  <title>Pocket Restoration · The Living Trail</title>
+</head>
+<body>
+  <a href="#game" class="skip-link">Skip to game</a>
+  <header class="site-header">
+    <div class="brand" aria-label="Pocket Restoration: The Living Trail">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <div><strong>Pocket Restoration</strong><small>THE LIVING TRAIL · v1.0</small></div>
+    </div>
+    <nav class="top-actions" aria-label="Primary">
+      <a href="#how-to">Guide</a><a href="#save-panel">Save &amp; privacy</a>
+      <button id="update-button" type="button" class="quiet" hidden>Update ready</button>
+    </nav>
+  </header>
+  <main id="game" class="app-layout">
+    <section class="game-panel" aria-labelledby="mission-title">
+      <div class="mission-heading">
+        <div><p class="eyebrow">REGENERATIVE EXPEDITION</p><h1 id="mission-title">The Living Trail <span aria-hidden="true">🌱</span></h1></div>
+        <span class="sector-chip" id="sector-label">BEFORE THE TRAIL</span>
+      </div>
+      <p class="intro">Clear the ground. Root new life. Leave each habitat better than you found it.</p>
+      <div class="seed-row" id="run-setup">
+        <label class="seed-field">World seed
+          <input id="seed-input" type="text" maxlength="40" value="living-earth-01" pattern="[a-zA-Z0-9 _-]+" autocomplete="off" spellcheck="false" aria-describedby="seed-hint">
+        </label>
+        <button id="roll-seed" class="secondary" type="button">🎲 Shuffle</button>
+        <button id="start-button" class="primary" type="button">New trail</button>
+      </div>
+      <p id="seed-hint" class="microcopy">The same seed creates the same untouched sector maps. Starting a new trail replaces the current run, but keeps field knowledge.</p>
+      <div class="board-header">
+        <div id="location-readout" class="location-readout">Ready for a fresh trail.</div>
+        <div id="save-indicator" class="save-indicator" role="status">Loading local storage…</div>
+      </div>
+      <div class="board-wrap">
+        <canvas id="board" width="450" height="450" tabindex="0" aria-label="Habitat grid, nine columns and nine rows. Swipe or use directional buttons to move. Use the selected tool to restore the tile you stand on." aria-describedby="tile-description"></canvas>
+        <div id="html-board" class="html-board" hidden aria-label="Accessible fallback habitat grid"></div>
+      </div>
+      <p class="tile-description" id="tile-description">The crew begins at the upper left. The golden passage is at the lower right.</p>
+      <div class="meters" aria-label="Habitat indicators">
+        <div class="meter"><label for="soil-meter">Soil <output id="soil-value">—</output></label><progress id="soil-meter" value="0" max="100"></progress></div>
+        <div class="meter"><label for="water-meter">Water <output id="water-value">—</output></label><progress id="water-meter" value="0" max="100"></progress></div>
+        <div class="meter"><label for="biodiversity-meter">Biodiversity <output id="biodiversity-value">—</output></label><progress id="biodiversity-meter" value="0" max="100"></progress></div>
+      </div>
+      <div class="resource-strip" aria-label="Crew resources">
+        <span>⚡ Energy <strong id="energy-value">—</strong></span>
+        <span>🧰 Supplies <strong id="supplies-value">—</strong></span>
+        <span>💧 Canteen <strong id="canteen-value">—</strong></span>
+        <span>👣 Steps <strong id="turn-value">0</strong></span>
+      </div>
+      <section class="control-section" aria-labelledby="tools-title">
+        <div class="control-heading"><h2 id="tools-title">Field tools</h2><span class="microcopy">Choose one, then use it on your tile</span></div>
+        <div class="tool-row" role="group" aria-label="Select a field tool">
+          <button type="button" data-tool="clean" class="tool active" aria-pressed="true"><span aria-hidden="true">🧤</span> Clean <kbd>1</kbd></button>
+          <button type="button" data-tool="plant" class="tool" aria-pressed="false"><span aria-hidden="true">🌱</span> Plant <kbd>2</kbd></button>
+          <button type="button" data-tool="water" class="tool" aria-pressed="false"><span aria-hidden="true">💦</span> Water <kbd>3</kbd></button>
+          <button type="button" data-tool="refill" class="tool" aria-pressed="false"><span aria-hidden="true">🫗</span> Refill <kbd>4</kbd></button>
+        </div>
+        <div class="control-bottom">
+          <div class="dpad" role="group" aria-label="Movement">
+            <button type="button" class="move up" data-move="up" aria-label="Move up">▲</button>
+            <button type="button" class="move left" data-move="left" aria-label="Move left">◀</button>
+            <span class="dpad-core" aria-hidden="true">✣</span>
+            <button type="button" class="move right" data-move="right" aria-label="Move right">▶</button>
+            <button type="button" class="move down" data-move="down" aria-label="Move down">▼</button>
+          </div>
+          <div class="action-area"><button id="action-button" type="button" class="action-button">RESTORE <small>Space · E</small></button><span class="microcopy">Swiping the map also moves the crew.</span></div>
+        </div>
+      </section>
+      <div id="announcement" class="notice" role="status" aria-live="polite" aria-atomic="true">Select New trail to begin.</div>
+    </section>
+    <aside class="side-panel" aria-label="Progress and management">
+      <section class="aside-card" aria-labelledby="quest-title">
+        <div class="card-heading"><h2 id="quest-title">Mission graph</h2><span aria-hidden="true">🧭</span></div>
+        <p class="microcopy">Complete each prerequisite before the next task begins counting. Reach the golden gate to advance.</p>
+        <ol id="quest-list" class="quest-list"><li>Start a trail to reveal your first objectives.</li></ol>
+        <button id="route-button" class="secondary full" type="button" hidden>Choose next route</button>
+      </section>
+      <section class="aside-card" aria-labelledby="mastery-title">
+        <div class="card-heading"><h2 id="mastery-title">Field mastery</h2><span aria-hidden="true">✦</span></div>
+        <div class="mastery-stats"><div>Trails <strong id="runs-value">0</strong></div><div>Restored <strong id="victories-value">0</strong></div><div>Best habitat <strong id="best-value">0</strong></div><div>Knowledge <strong id="knowledge-value">0</strong></div></div>
+        <p id="upgrade-label" class="microcopy">Training adds starting supplies to future sectors.</p>
+        <button id="upgrade-button" class="secondary full" type="button">Train crew</button>
+      </section>
+      <section id="save-panel" class="aside-card" aria-labelledby="storage-title">
+        <div class="card-heading"><h2 id="storage-title">My progress, my device</h2><span aria-hidden="true">🔒</span></div>
+        <p id="storage-mode" class="microcopy">Checking storage…</p>
+        <div class="stack-buttons"><button id="save-button" type="button" class="secondary">Save now</button><button id="export-button" type="button" class="secondary">Export JSON backup</button><label id="import-label" class="import-label secondary" role="button" tabindex="0">Import JSON backup<input type="file" id="import-file" accept="application/json,.json" hidden></label><button id="erase-button" type="button" class="danger">Erase local data</button></div>
+        <p class="microcopy">Imports are validated before replacing local state. No accounts, analytics, external assets or network requests are required for gameplay.</p>
+      </section>
+      <details id="settings-panel" class="aside-card details-card">
+        <summary>Settings &amp; accessibility</summary>
+        <div class="setting-controls">
+          <label>Motion<select id="motion-setting"><option value="system">Follow device preference</option><option value="on">Reduce motion</option><option value="off">Allow gentle motion</option></select></label>
+          <label>Graphics quality<select id="quality-setting"><option value="auto">Automatic</option><option value="low">Low — static shapes</option><option value="medium">Medium</option><option value="high">High</option></select></label>
+          <label class="check-label"><input id="large-controls-setting" type="checkbox" checked> Large touch targets</label>
+          <p class="microcopy">Changes stay on this device. No tracking, vibration or audio. Manual quality overrides automatic scaling.</p>
+        </div>
+      </details>
+      <details class="aside-card details-card" id="how-to">
+        <summary>Trail guide &amp; systems</summary>
+        <div class="guide-copy">
+          <p><strong>Move:</strong> swipe the habitat, use the arrow pad, or use WASD / arrow keys. Walk onto litter, soil, sprouts or springs to interact.</p>
+          <p><strong>Act:</strong> select a tool and tap RESTORE or press Space/E. Cleaning produces supplies; planting consumes them; watering uses finite canteen water. Blue springs have only two safe draws each.</p>
+          <p><strong>Quests:</strong> complete prerequisites in order, then step onto the gold passage in the bottom-right corner. After sector one, select a headwaters or canopy route. Three sectors make a complete trail.</p>
+          <p><strong>Model:</strong> soil, water and biodiversity are bounded, simplified game indicators—not ecological measurements or field advice. Every three successful actions causes a small drought penalty.</p>
+          <p><strong>Persistence:</strong> IndexedDB is preferred, localStorage is a limited fallback, memory-only mode does not survive reloads. A downloaded backup is portable. A service worker enables hosted offline reloads only after successful online installation.</p>
+          <p><strong>Keys:</strong> 1–4 choose tools. Enter on the golden passage can also advance. Esc dismisses the route dialog so you can choose later.</p>
+        </div>
+      </details>
+    </aside>
+  </main>
+  <dialog id="route-dialog" aria-labelledby="route-heading">
+    <div class="dialog-inside"><p class="eyebrow">YOUR TRAIL BRANCHES</p><h2 id="route-heading">How will this habitat recover?</h2><p>Each path changes the next sector's objective. The choice is permanent for this run.</p>
+      <button type="button" data-route="water" class="route-choice"><strong>💧 Headwaters</strong><span>Clear waste, then water two new native sprouts.</span></button>
+      <button type="button" data-route="canopy" class="route-choice"><strong>🌿 Green corridor</strong><span>Collect extra supplies through cleanup, then root three native sprouts.</span></button>
+      <button type="button" id="route-later" class="quiet full">Choose later</button>
+    </div>
+  </dialog>
+  <footer><span>Pocket Restoration · Original browser game · Foster + Navi / Planetary Restoration Archive</span><span>Zero tracking · Finite resources · Respect living systems</span></footer>
+  <noscript><p class="noscript">JavaScript is required to play. This static page includes the rules, but gameplay and local saves are unavailable without JavaScript.</p></noscript>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
