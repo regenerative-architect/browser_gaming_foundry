@@ -1,0 +1,13 @@
+export const APP_ID = 'pocket-restoration-roguelite';
+export const SAVE_VERSION = 2;
+export const GRID = 9;
+export const STAGES = 3;
+export const MAX_ENERGY = 15;
+export const TOOLS = ['clean', 'plant', 'water', 'refill'];
+export const TILE_KINDS = ['meadow', 'dry', 'litter', 'spring', 'rock', 'grove', 'sprout'];
+export const DIRECTIONS = Object.freeze({up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]});
+export const ECO_KEYS = ['soil', 'water', 'biodiversity'];
+export const MAX_FILE_BYTES = 1024 * 1024;
+export const DEFAULT_SETTINGS = Object.freeze({motion:'system',quality:'auto',largeControls:true});
+export const EMPTY_META = Object.freeze({runs:0,victories:0,knowledge:0,toolLevel:0,bestScore:0});
+export const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
